@@ -3,4 +3,5 @@ project(ThreadPool)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(ThreadPool main.cpp)
+add_executable(ThreadPool main.cpp
+        TextBook.cpp)
