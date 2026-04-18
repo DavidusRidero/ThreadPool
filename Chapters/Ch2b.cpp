@@ -49,8 +49,7 @@ struct func
     func(int& i_):i(i_){}
 
     // Operations
-    void operator()()
-    {
+    void operator()() const {
         for(unsigned j=0;j<1000000;++j)
             //do_something(i)
             ;
