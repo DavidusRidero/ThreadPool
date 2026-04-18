@@ -4,4 +4,6 @@ project(ThreadPool)
 set(CMAKE_CXX_STANDARD 23)
 
 add_executable(ThreadPool main.cpp
-        Chapters/TextBook.cpp)
+        Chapters/Ch1.cpp
+        Chapters/Ch2a.cpp
+        Chapters/Ch2b.cpp)
