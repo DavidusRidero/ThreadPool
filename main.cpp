@@ -1,17 +1,10 @@
-#include <bits/stdc++.h>
+#include <iostream>
 
-class ThreadPool {
-
-
-    private:
-        std::vector<std::thread> Threads;
-        std::queue<std::function<void()>> Tasks;
-
-
-};
-
+void print_hello() {
+    std::cout << "Hello World" << std::endl;
+}
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    print_hello();
     return 0;
 }
