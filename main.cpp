@@ -32,6 +32,34 @@ public:
     scoped_thread& operator=(scoped_thread&&) noexcept = default;
 };
 
+//LLM: Step 1 — Task queue : a thread-safe queue that holds callables
+class Task_queue {
+    std::queue<std::function<void()>> Tasks;
+    std::mutex guard;
+
+
+public:
+    //constructor to initialise
+    Task_queue() {    }
+
+    //push(task) callable.
+    void push(std::function<void()> task) {
+        Tasks.push(std::move(task));
+    }
+
+    //pop callable.
+    std::function<void()> pop() {
+        //Sanity Check for underflow
+        if (Tasks.empty())
+            throw std::logic_error("Queue Underflow.");
+
+        std::function<void()> temp = Tasks.front();
+        Tasks.pop();
+        return temp;
+    }
+};
+
+
 
 
 void print_hello() {
