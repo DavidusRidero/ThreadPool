@@ -1,14 +1,22 @@
 #include <bits/stdc++.h>
 
 //int counter = 1;
-std::atomic<int> counter{0};
+std::atomic<int> counter{1};
 
 std::mutex cout_mutex;
 
 void print_hello() {
-    int id = counter++;
+    //Keeping the mutex lock here, guarantees the order.
     std::lock_guard<std::mutex> lock(cout_mutex);
-    std::cout << "Hello World by Thread " << counter++ << "\n";
+
+    const int id = counter++;
+
+    //Keeping the mutex here guarantees
+    //the output is a single line, unbroken by other threads
+
+    std::cout << "Hello World by Thread " << id << "\n";
+    //std::this_thread::get_id doesn't output a number.
+    //It returns something like 89283492879287359.
 }
 
 int main() {
