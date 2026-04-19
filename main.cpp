@@ -5,7 +5,6 @@ std::atomic<int> counter{1};
 
 std::mutex cout_mutex;
 
-
 class scoped_thread {
     std::thread Thread;
 
@@ -17,9 +16,11 @@ public:
             throw std::logic_error("No Thread.");
     }
 
-    //Destructor that joins
+    //Destructor that joins. Sanity check for std::threads that
+    //have no execution threads assigned to them.
     ~scoped_thread() {
-        Thread.join();
+        if (Thread.joinable())
+            Thread.join();
     }
 
     //Disable the Copy constructor & Copy Assignment constructor
