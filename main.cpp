@@ -64,7 +64,7 @@ public:
 
     void shutdown() {
         stop = true;
-        //Someway to add a empty function to the beginning of the queue?
+        //Someway to add an empty function to the beginning of the queue?
     }
 };
 
