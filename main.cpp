@@ -1,3 +1,6 @@
+// WORK IN PROGRESS. 20th April Snapshot.
+// Check https://github.com/DavidusRidero/ThreadPool for the current version.
+
 #include <bits/stdc++.h>
 
 //int counter = 1;

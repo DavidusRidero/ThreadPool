@@ -1,0 +1,21 @@
+name: Sync main.cpp to Gist
+
+on:
+  push:
+    paths:
+      - 'main.cpp' # Only runs when main.cpp changes
+
+jobs:
+  update-gist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Update Gist
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GIST_TOKEN }}
+          gist_id: 245125f7efdc2552be59a218827b15e7
+          file_path: main.cpp
+          file_type: text
