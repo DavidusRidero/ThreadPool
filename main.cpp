@@ -3,16 +3,13 @@
 
 #include <bits/stdc++.h>
 
-//int counter = 1;
 std::atomic<int> counter{1};
-
 std::mutex cout_mutex;
 
 class scoped_thread {
     std::thread Thread;
 
 public:
-
     //initialization with member lists, with a sanity check for non-threads.
     explicit scoped_thread(std::thread Thread_) : Thread(std::move(Thread_)) {
         if (!Thread.joinable())
@@ -37,34 +34,43 @@ public:
 
 //LLM: Step 1 — Task queue : a thread-safe queue that holds callables
 class Task_queue {
-    std::queue<std::function<void()>> Tasks;
+private:
     std::mutex guard;
+    std::condition_variable cv;
+    std::queue<std::function<void()>> Tasks;
+    bool stop;
 
 
 public:
-    //constructor to initialise
-    Task_queue() {    }
-
     //push(task) callable.
     void push(std::function<void()> task) {
-        Tasks.push(std::move(task));
+        {
+            std::unique_lock<std::mutex> lock(guard);
+            Tasks.push(std::move(task));
+        }
+        cv.notify_one();
     }
 
     //pop callable.
     std::function<void()> pop() {
-        //Sanity Check for underflow
-        if (Tasks.empty())
-            throw std::logic_error("Queue Underflow.");
+        //Mutex is the resource, unique_lock is the RAII wrapper.
+        std::unique_lock<std::mutex> lock(guard);
+        cv.wait(lock, [this]{ return !Tasks.empty();});
 
-        std::function<void()> temp = Tasks.front();
+        std::function<void()> temp = stop ? std::function<void()> : Tasks.front();
         Tasks.pop();
         return temp;
     }
+
+    void shutdown() {
+        stop = true;
+        //Someway to add a empty function to the beginning of the queue?
+    }
 };
 
+void worker_loop() {
 
-
-
+}
 void print_hello() {
     //Keeping the mutex lock here, guarantees the order.
     std::lock_guard<std::mutex> lock(cout_mutex);
