@@ -3,9 +3,6 @@
 
 #include <bits/stdc++.h>
 
-std::atomic<int> counter{1};
-std::mutex cout_mutex;
-
 class scoped_thread {
     std::thread Thread;
 
@@ -32,7 +29,6 @@ public:
     scoped_thread& operator=(scoped_thread&&) noexcept = default;
 };
 
-//LLM: Step 1 — Task queue : a thread-safe queue that holds callables
 class Task_queue {
 private:
     std::mutex guard;
@@ -41,7 +37,6 @@ private:
     bool stop = false;
 
 public:
-    //push(task) callable.
     void push(std::function<void()> task) {
         {
             std::unique_lock<std::mutex> lock(guard);
@@ -50,9 +45,7 @@ public:
         cv.notify_one();
     }
 
-    //pop callable.
     std::function<void()> pop() {
-        //Mutex is the resource, unique_lock is the RAII wrapper.
         std::unique_lock<std::mutex> lock(guard);
 
         //the conditional variable "wakes" the thread, if the task is empty or shutdown is called.
@@ -71,31 +64,28 @@ public:
             std::unique_lock<std::mutex> lock(guard);
             stop = true;
         }
-        //Someway to add an empty function to the beginning of the queue?
-        //No need to do that. Just inform all threads
         cv.notify_all();
     }
 };
 
-void worker_loop() {
+void worker_function() {
 
 }
+
 void print_hello() {
+    std::atomic<int> static counter{1};
+    std::mutex cout_mutex;
+
     //Keeping the mutex lock here, guarantees the order.
     std::lock_guard<std::mutex> lock(cout_mutex);
 
     const int id = counter++;
 
-    //Keeping the mutex here guarantees
-    //the output is a single line, unbroken by other threads
+    //Keeping the mutex here guarantees the output
+    //is a single line, unbroken by other threads
 
     std::cout << "Hello World by Thread " << id << "\n";
-    //std::this_thread::get_id doesn't output a number.
-    //It returns something like 89283492879287359.
-    //only useful for debugging.
 }
-
-
 void main_subfunction_1() {
     std::vector<scoped_thread> threads;
     std::cout << "Enter the number of threads to be spawned: ";
