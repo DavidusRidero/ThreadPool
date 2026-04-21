@@ -1,5 +1,4 @@
-// WORK IN PROGRESS. 20th April Snapshot.
-// Check https://github.com/DavidusRidero/ThreadPool for the current version.
+// WORK IN PROGRESS. 21st April Snapshot.
 
 #include <bits/stdc++.h>
 
@@ -118,8 +117,7 @@ void print_hello() {
     std::cout << "Hello World by Thread " << id << "\n";
 }
 void main_subfunction_1() {
-    //Direct manipulation of thread
-
+    //Direct manipulation of threads
     std::vector<scoped_thread> threads;
     std::cout << "Enter the number of threads to be spawned: ";
     int count = 0;
@@ -144,12 +142,15 @@ void main_subfunction_2() {
 }
 void main_subfunction_3() {
     //Thread manipulation through Threadpool
-
     ThreadPool pool(4);
     uint8_t counter = 0;
+    std::mutex print_mutex;
 
+    //Race condition on output stream.
+    //Caught something that Claude missed. adding the mutex to capture list.
     for (int i = 0; i < 10; i++)
-        pool.submit([i]() {
+        pool.submit([i, &print_mutex]() {
+            std::lock_guard<std::mutex> lock_guard(print_mutex);
             std::cout << "Task " << i << " by thread" << std::this_thread::get_id() << ".\n";
         });
 
