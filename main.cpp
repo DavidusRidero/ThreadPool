@@ -29,7 +29,7 @@ public:
     scoped_thread& operator=(scoped_thread&&) noexcept = default;
 };
 
-class Task_queue {
+class TaskQueue {
 private:
     std::mutex guard;
     std::condition_variable cv;
@@ -68,9 +68,40 @@ public:
     }
 };
 
-void worker_function() {
-
+void worker_function( TaskQueue& Queue ) {
+    while (true) {
+        auto th = Queue.pop();
+        if (!th) break;
+        th();
+    }
 }
+
+class ThreadPool {
+private:
+    TaskQueue queue;
+    std::vector<std::thread> workers;
+
+public:
+    explicit ThreadPool(int n) {
+        for (uint8_t i = 0; i < n; i++)
+            //You forgot the std::ref
+            workers.emplace_back(worker_function, std::ref(queue));
+        //Thread copies the arguments by default.
+    }
+
+    void submit (std::function<void()> input) {
+        queue.push(std::move(input));
+        //Make sure to use std::move to transfer ownership
+    }
+
+    ~ThreadPool() {
+        std::cout << "ThreadPool destructed.\n";
+        queue.shutdown();
+        //Threads are move only. Use references.
+        for (auto& th:workers)
+            th.join();
+    }
+};
 
 void print_hello() {
     std::atomic<int> static counter{1};
@@ -87,6 +118,8 @@ void print_hello() {
     std::cout << "Hello World by Thread " << id << "\n";
 }
 void main_subfunction_1() {
+    //Direct manipulation of thread
+
     std::vector<scoped_thread> threads;
     std::cout << "Enter the number of threads to be spawned: ";
     int count = 0;
@@ -95,9 +128,9 @@ void main_subfunction_1() {
     for (unsigned i = 0; i < count; i++)
         threads.emplace_back(std::thread(print_hello));
 }
-
 void main_subfunction_2() {
-    Task_queue Queue;
+    //Thread manipulation through TaskQueue
+    TaskQueue Queue;
     Queue.push( []() { std::cout << "Task 1\n"; } );
     Queue.push( []() { std::cout << "Task 2\n"; } );
 
@@ -109,9 +142,21 @@ void main_subfunction_2() {
     auto t3 = Queue.pop();
     if (!t3) std::cout << "Received empty function. Shutdown works correctly.\n";
 }
+void main_subfunction_3() {
+    //Thread manipulation through Threadpool
+
+    ThreadPool pool(4);
+    uint8_t counter = 0;
+
+    for (int i = 0; i < 10; i++)
+        pool.submit([i]() {
+            std::cout << "Task " << i << " by thread" << std::this_thread::get_id() << ".\n";
+        });
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
 
 int main() {
-    main_subfunction_2();
-
-    return 0;
+    main_subfunction_3();
+    return 1;
 }
