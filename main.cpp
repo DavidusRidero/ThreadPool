@@ -38,8 +38,7 @@ private:
     std::mutex guard;
     std::condition_variable cv;
     std::queue<std::function<void()>> Tasks;
-    bool stop;
-
+    bool stop = false;
 
 public:
     //push(task) callable.
@@ -55,16 +54,26 @@ public:
     std::function<void()> pop() {
         //Mutex is the resource, unique_lock is the RAII wrapper.
         std::unique_lock<std::mutex> lock(guard);
-        cv.wait(lock, [this]{ return !Tasks.empty();});
 
-        std::function<void()> temp = stop ? std::function<void()> : Tasks.front();
+        //the conditional variable "wakes" the thread, if the task is empty or shutdown is called.
+        cv.wait(lock, [this]{ return !Tasks.empty() or stop;});
+
+        //{} is an empty std function. Signals the worker to exit.
+        if (stop && Tasks.empty()) return {};
+
+        std::function<void()> temp = Tasks.front();
         Tasks.pop();
         return temp;
     }
 
     void shutdown() {
-        stop = true;
+        {
+            std::unique_lock<std::mutex> lock(guard);
+            stop = true;
+        }
         //Someway to add an empty function to the beginning of the queue?
+        //No need to do that. Just inform all threads
+        cv.notify_all();
     }
 };
 
@@ -86,7 +95,8 @@ void print_hello() {
     //only useful for debugging.
 }
 
-int main() {
+
+void main_subfunction_1() {
     std::vector<scoped_thread> threads;
     std::cout << "Enter the number of threads to be spawned: ";
     int count = 0;
@@ -94,6 +104,24 @@ int main() {
 
     for (unsigned i = 0; i < count; i++)
         threads.emplace_back(std::thread(print_hello));
+}
+
+void main_subfunction_2() {
+    Task_queue Queue;
+    Queue.push( []() { std::cout << "Task 1\n"; } );
+    Queue.push( []() { std::cout << "Task 2\n"; } );
+
+    auto th1 = Queue.pop(); th1();
+    auto th2 = Queue.pop(); th2();
+
+    Queue.shutdown();
+
+    auto t3 = Queue.pop();
+    if (!t3) std::cout << "Received empty function. Shutdown works correctly.\n";
+}
+
+int main() {
+    main_subfunction_2();
 
     return 0;
 }
