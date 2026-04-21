@@ -81,8 +81,8 @@ private:
     std::vector<std::thread> workers;
 
 public:
-    explicit ThreadPool(int n) {
-        for (uint8_t i = 0; i < n; i++)
+    explicit ThreadPool(const int n) {
+        for (int i = 0; i < n; i++)
             //You forgot the std::ref
             workers.emplace_back(worker_function, std::ref(queue));
         //Thread copies the arguments by default.
