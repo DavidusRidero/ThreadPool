@@ -88,8 +88,30 @@ public:
         //Thread copies the arguments by default.
     }
 
-    void submit (std::function<void()> input) {
-        queue.push(std::move(input));
+    template<typename F>
+    auto submit (F&& task) -> std::future<std::invoke_result_t<F>> {
+        using R = std::invoke_result_t<F>;
+
+        //Callable that returns R. As for task, move if possible, copy if not.
+        std::packaged_task<R()> pt(std::forward<F>(task));
+
+        //We create a future associated with the pt's promise.
+        //Task returns value. Value goes in promise. Future becomes ready.
+        std::future<R> future = pt.get_future();
+
+        //pt is move-only, and std::function requires copyability.
+        //So pt is put on the heap through shared_ptr, which is copyable,
+        //allowing function to hold a lambda.
+        auto shared_pt = std::make_shared<std::packaged_task<R()>> (std::move(pt));
+
+        //dereference invokes the packaged task, running the original callable.
+        //The return value automatically gets stored into the promise, making the future ready.
+        queue.push([shared_pt]{ (*shared_pt)(); });
+
+        return future;
+
+        //PREVIOUS IMPLEMENTATION
+        //queue.push(std::move(input));
         //Make sure to use std::move to transfer ownership
     }
 
