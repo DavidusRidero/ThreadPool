@@ -1,4 +1,6 @@
-// WORK IN PROGRESS. 22nd April Snapshot.
+// WORK IN PROGRESS.
+// 22nd April Snapshot. Probably the last day.
+// https://github.com/DavidusRidero/ThreadPool
 
 #include <bits/stdc++.h>
 
@@ -88,8 +90,20 @@ public:
         //Thread copies the arguments by default.
     }
 
+    //Manually, we would have to initialize a promise and a future.
+    //Then we had to link those two.
+    //Then we had to execute the callable somehow.
+    //Then set the result into the promise.
+
+    //Packaged Task takes the callable and sets the promise automatically.
+    //std::packaged_task<int()> pt(task);
+    //std::future<int> fu = pt.get_future();
+    //pt();
+
+    //LLM Task 2: Upgrade the submit to work with packaged_task.
     template<typename F>
     auto submit (F&& task) -> std::future<std::invoke_result_t<F>> {
+        //Alias. What type does F return when it's called.
         using R = std::invoke_result_t<F>;
 
         //Callable that returns R. As for task, move if possible, copy if not.
@@ -164,6 +178,7 @@ void main_subfunction_2() {
 }
 void main_subfunction_3() {
     //Thread manipulation through Threadpool
+
     ThreadPool pool(4);
     uint8_t counter = 0;
     std::mutex print_mutex;
@@ -178,8 +193,18 @@ void main_subfunction_3() {
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 }
+void main_subfunction_4() {
+    //Thread manipulation, now with packaged tasks
+    ThreadPool pool(4);
+
+    auto f1 = pool.submit([]{ return 42; });
+    auto f2 = pool.submit([]{ return std::string("Hello from pool.\n"); });
+
+    std::cout << f1.get() << "\n";
+    std::cout << f2.get();
+}
 
 int main() {
-    main_subfunction_3();
+    main_subfunction_4();
     return 1;
 }
